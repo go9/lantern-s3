@@ -846,7 +846,7 @@ defmodule LanternS3.Explorer do
             <.live_component
               module={Uploader}
               id={"#{@id}-uploader"}
-              adapter={S3Adapter}
+              adapter={@scope.upload_adapter || S3Adapter}
               adapter_config={
                 %{
                   storage_adapter: @scope.adapter,
@@ -855,6 +855,9 @@ defmodule LanternS3.Explorer do
                   prefix: @prefix
                 }
               }
+              accept={Map.get(@scope.upload_opts, :accept, :any)}
+              max_entries={Map.get(@scope.upload_opts, :max_entries, 20)}
+              max_file_size={Map.get(@scope.upload_opts, :max_file_size, 50_000_000)}
               on_event={uploader_on_event(@id)}
             />
           </div>
