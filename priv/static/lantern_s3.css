@@ -1,0 +1,241 @@
+/* S3 explorer upload chrome (#940): active drop overlay. The progress bar moved
+   to the lantern-ui <.progress> component; its old track/fill CSS was removed. */
+.lantern .lt-upload-item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+.lantern .lt-upload-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.lantern .lt-success {
+  border-radius: var(--lt-radius-sm);
+  background: color-mix(in srgb, var(--lt-success) 12%, transparent);
+  color: var(--lt-success);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--lt-text-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.lantern > .lt-success {
+  flex: none;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--lt-success) 30%, var(--lt-border));
+}
+.lantern .lt-banner-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.lantern .lt-uploader-panel {
+  margin-bottom: 0.75rem;
+}
+.lantern .lt-drop-zone {
+  position: relative;
+  min-height: 8rem;
+  flex: 1;
+}
+.lantern .lt-drop-zone.phx-drop-target-active {
+  outline: 2px dashed var(--lt-accent);
+  outline-offset: -0.35rem;
+  border-radius: var(--lt-radius-sm);
+  background: color-mix(in oklch, var(--lt-accent) 8%, var(--lt-bg));
+}
+.lantern .lt-drop-zone.phx-drop-target-active::after {
+  content: "Drop to upload";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  font-size: var(--lt-text-sm);
+  font-weight: 600;
+  color: var(--lt-accent);
+  background: color-mix(in oklch, var(--lt-bg) 55%, transparent);
+}
+/* Standalone Uploader dropzone + file rows (LanternS3.Uploader). Host-side;
+   --lt-* only so it tracks the lantern theme bridge above. */
+.lantern .lt-dropzone-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.5rem;
+  border: 1.5px dashed var(--lt-border);
+  border-radius: var(--lt-radius);
+  background: var(--lt-bg);
+  text-align: center;
+  min-height: 12rem;
+  box-sizing: border-box;
+}
+.lantern .lt-dropzone-cloud {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1.5px dashed var(--lt-border);
+  border-radius: 999px;
+  color: var(--lt-fg-muted);
+}
+.lantern .lt-dropzone-cloud .lt-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.lantern .lt-dropzone-title {
+  margin: 0;
+  color: var(--lt-fg);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.lantern .lt-dropzone-hint {
+  margin: 0;
+  color: var(--lt-fg-muted);
+  font-size: var(--lt-text-sm);
+  max-width: 28rem;
+  line-height: 1.4;
+}
+.lantern .lt-dropzone-browse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.35rem;
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--lt-border);
+  border-radius: var(--lt-radius-sm);
+  background: var(--lt-bg);
+  color: var(--lt-fg);
+  font-size: var(--lt-text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.lantern .lt-dropzone-browse:hover {
+  background: var(--lt-bg-subtle);
+  border-color: var(--lt-accent);
+}
+.lantern .lt-uploader-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.lantern .lt-uploader-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--lt-border);
+  border-radius: var(--lt-radius);
+  background: var(--lt-bg-subtle);
+  min-width: 0;
+}
+.lantern .lt-uploader-file {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.5rem;
+  color: var(--lt-fg-muted);
+}
+.lantern .lt-uploader-badge {
+  position: absolute;
+  bottom: -0.1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.2rem;
+  background: var(--lt-accent);
+  color: var(--lt-bg);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.lantern .lt-uploader-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+.lantern .lt-uploader-name {
+  color: var(--lt-fg);
+  font-weight: 500;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lantern .lt-uploader-bytes {
+  color: var(--lt-fg-muted);
+  font-size: var(--lt-text-sm);
+}
+.lantern .lt-uploader-meta .lui-progress {
+  margin-top: 0.2rem;
+}
+.lantern .lt-uploader-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: none;
+  font-size: var(--lt-text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.lantern .lt-uploader-status--uploading {
+  color: var(--lt-fg-muted);
+}
+.lantern .lt-uploader-status--done {
+  color: var(--lt-success);
+}
+.lantern .lt-uploader-clearall {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+.lantern .lt-uploader-clearall .lt-linkbtn {
+  background: transparent;
+  border: 0;
+  padding: 0.25rem 0.15rem;
+  color: var(--lt-fg-muted);
+  font-size: var(--lt-text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.lantern .lt-uploader-clearall .lt-linkbtn:hover {
+  color: var(--lt-fg);
+  text-decoration: underline;
+}
+
+.lantern .lt-empty-bleed {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+  padding: 2rem 1rem;
+}
+.lantern .lt-spin {
+  animation: lt-spin 0.8s linear infinite;
+}
+@keyframes lt-spin {
+  to { transform: rotate(360deg); }
+}
+
