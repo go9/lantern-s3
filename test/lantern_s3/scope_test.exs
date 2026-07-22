@@ -23,6 +23,25 @@ defmodule LanternS3.ScopeTest do
     end
   end
 
+  describe "injectable upload adapter + limits" do
+    test "defaults: no upload adapter override, empty opts" do
+      s = scope()
+      assert s.upload_adapter == nil
+      assert s.upload_opts == %{}
+    end
+
+    test "carries a custom upload adapter + limit opts" do
+      s =
+        scope(
+          upload_adapter: SomeGatedAdapter,
+          upload_opts: %{accept: ~w(.png), max_entries: 5, max_file_size: 5_242_880}
+        )
+
+      assert s.upload_adapter == SomeGatedAdapter
+      assert s.upload_opts.max_entries == 5
+    end
+  end
+
   describe "within_root?/2 — the navigation guard" do
     test "no root granted → every prefix is allowed" do
       s = scope()

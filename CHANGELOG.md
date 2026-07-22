@@ -6,6 +6,11 @@ All notable changes are documented here ([Keep a Changelog](https://keepachangel
 ## [Unreleased]
 
 ### Added
+- **Injectable upload adapter + limits** on `Scope` (`upload_adapter`, `upload_opts`):
+  the Explorer's built-in uploader can now use a host-supplied presign adapter
+  (e.g. a gated one) and accept/max-entries/max-file-size, instead of the fixed
+  default. Lets one Explorer be the whole interface even where uploads must be
+  policy-enforced (public sandbox). Defaults preserve current behaviour.
 - **`Scope.root_prefix`** — confine an Explorer mount to a subtree. The browser
   starts at the root, `navigate` is guarded (`Scope.within_root?/2`) so a client
   can never steer above/outside it, and the breadcrumb is relative to the root.

@@ -46,7 +46,9 @@ defmodule LanternS3.Scope do
           capabilities: MapSet.t(capability()),
           on_event: (atom(), map() -> any()) | nil,
           auto_open: boolean(),
-          root_prefix: String.t()
+          root_prefix: String.t(),
+          upload_adapter: module() | nil,
+          upload_opts: map()
         }
 
   @enforce_keys [:adapter, :config]
@@ -56,7 +58,9 @@ defmodule LanternS3.Scope do
             capabilities: nil,
             on_event: nil,
             auto_open: false,
-            root_prefix: ""
+            root_prefix: "",
+            upload_adapter: nil,
+            upload_opts: %{}
 
   @all_capabilities MapSet.new([
                       :upload,
@@ -90,7 +94,9 @@ defmodule LanternS3.Scope do
       capabilities: normalize_capabilities(Map.get(attrs, :capabilities, :all)),
       on_event: Map.get(attrs, :on_event),
       auto_open: Map.get(attrs, :auto_open, false) == true,
-      root_prefix: attrs |> Map.get(:root_prefix, "") |> normalize_root_prefix()
+      root_prefix: attrs |> Map.get(:root_prefix, "") |> normalize_root_prefix(),
+      upload_adapter: Map.get(attrs, :upload_adapter),
+      upload_opts: Map.get(attrs, :upload_opts, %{})
     }
   end
 
