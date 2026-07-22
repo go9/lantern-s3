@@ -45,7 +45,8 @@ defmodule LanternS3.Scope do
           buckets: [bucket()],
           capabilities: MapSet.t(capability()),
           on_event: (atom(), map() -> any()) | nil,
-          auto_open: boolean()
+          auto_open: boolean(),
+          root_prefix: String.t()
         }
 
   @enforce_keys [:adapter, :config]
@@ -54,7 +55,8 @@ defmodule LanternS3.Scope do
             buckets: [],
             capabilities: nil,
             on_event: nil,
-            auto_open: false
+            auto_open: false,
+            root_prefix: ""
 
   @all_capabilities MapSet.new([
                       :upload,
@@ -87,9 +89,27 @@ defmodule LanternS3.Scope do
       buckets: attrs |> Map.get(:buckets, []) |> Enum.map(&normalize_bucket/1),
       capabilities: normalize_capabilities(Map.get(attrs, :capabilities, :all)),
       on_event: Map.get(attrs, :on_event),
-      auto_open: Map.get(attrs, :auto_open, false) == true
+      auto_open: Map.get(attrs, :auto_open, false) == true,
+      root_prefix: attrs |> Map.get(:root_prefix, "") |> normalize_root_prefix()
     }
   end
+
+  @doc "The locked root prefix this mount is confined to (`\"\"` = the whole bucket)."
+  @spec root_prefix(t()) :: String.t()
+  def root_prefix(%__MODULE__{root_prefix: prefix}), do: prefix
+
+  @doc """
+  Whether `prefix` is at or below the scope's locked root — the navigation guard.
+
+  With a `root_prefix` of `"sessions/abc/"`, a client-supplied `"sessions/xyz/"`
+  (or `""`, the bucket root) is rejected, so the Explorer can never be steered
+  out of the mount's own subtree. Always true when no root is set.
+  """
+  @spec within_root?(t(), String.t()) :: boolean()
+  def within_root?(%__MODULE__{root_prefix: root}, prefix) when is_binary(prefix),
+    do: String.starts_with?(prefix, root)
+
+  def within_root?(_scope, _prefix), do: false
 
   @doc "Whether `capability` is granted by `scope`."
   @spec can?(t(), capability()) :: boolean()
@@ -124,4 +144,15 @@ defmodule LanternS3.Scope do
   defp normalize_capabilities(:all), do: @all_capabilities
   defp normalize_capabilities(%MapSet{} = caps), do: caps
   defp normalize_capabilities(caps) when is_list(caps), do: MapSet.new(caps)
+
+  # Normalise to a bare, trailing-slashed key prefix: "" stays "" (whole bucket),
+  # otherwise strip any leading slash and ensure exactly one trailing slash so it
+  # composes cleanly with object keys and String.starts_with?/2 checks.
+  defp normalize_root_prefix(nil), do: ""
+  defp normalize_root_prefix(""), do: ""
+
+  defp normalize_root_prefix(prefix) when is_binary(prefix) do
+    trimmed = String.trim_leading(prefix, "/")
+    if String.ends_with?(trimmed, "/"), do: trimmed, else: trimmed <> "/"
+  end
 end
