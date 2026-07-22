@@ -153,14 +153,20 @@ defmodule LanternS3.Explorer do
   end
 
   def handle_event("navigate", %{"prefix" => prefix}, socket) do
-    socket =
-      socket
-      |> assign(:prefix, prefix)
-      |> reset_paging()
-      |> clear_selection_assigns()
-      |> emit(:navigate, %{prefix: prefix})
+    # Navigation guard: never let a client-supplied prefix escape the scope's
+    # locked root (multi-tenant isolation). Out-of-bounds targets are ignored.
+    if Scope.within_root?(socket.assigns.scope, prefix) do
+      socket =
+        socket
+        |> assign(:prefix, prefix)
+        |> reset_paging()
+        |> clear_selection_assigns()
+        |> emit(:navigate, %{prefix: prefix})
 
-    {:noreply, list_async(socket)}
+      {:noreply, list_async(socket)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("refresh", _params, socket) do
@@ -640,7 +646,7 @@ defmodule LanternS3.Explorer do
 
   defp reset_navigation(socket) do
     socket
-    |> assign(:prefix, "")
+    |> assign(:prefix, Scope.root_prefix(socket.assigns.scope))
     |> reset_paging()
     |> clear_selection_assigns()
     |> assign(:entries, %{folders: [], files: []})
@@ -972,11 +978,13 @@ defmodule LanternS3.Explorer do
   end
 
   defp breadcrumb(assigns) do
-    segments = breadcrumb_segments(assigns.current_bucket, assigns.prefix)
+    root_prefix = Scope.root_prefix(assigns.scope)
+    segments = breadcrumb_segments(assigns.prefix, root_prefix)
 
     assigns =
       assigns
       |> assign(:segments, segments)
+      |> assign(:root_prefix, root_prefix)
       |> assign(:bucket_label, bucket_label(assigns.scope, assigns.current_bucket))
       |> assign(:at_root?, segments == [])
 
@@ -990,7 +998,7 @@ defmodule LanternS3.Explorer do
             <:item
               :if={@auto_opened and not @at_root?}
               phx-click="navigate"
-              phx-value-prefix=""
+              phx-value-prefix={@root_prefix}
               phx-target={@myself}
             >
               {@bucket_label}
@@ -1389,8 +1397,8 @@ defmodule LanternS3.Explorer do
 
   # A bare modal shell (overlay + card) function component with an :inner_block
   # slot, so each modal supplies its own body without a render closure.
-  attr :myself, :any, required: true
-  slot :inner_block, required: true
+  attr(:myself, :any, required: true)
+  slot(:inner_block, required: true)
 
   defp modal_shell(assigns) do
     ~H"""
@@ -1425,10 +1433,19 @@ defmodule LanternS3.Explorer do
     end
   end
 
-  defp breadcrumb_segments(_bucket, prefix) do
-    prefix
+  # Only the path *below* the locked root becomes crumbs; each crumb target is a
+  # full key built back up from the root, so navigation stays inside the scope.
+  defp breadcrumb_segments(prefix, root_prefix) do
+    # String.trim_leading/2 rejects an empty match, so skip it for the ""-root case.
+    relative =
+      case root_prefix do
+        "" -> prefix
+        root -> String.trim_leading(prefix, root)
+      end
+
+    relative
     |> String.split("/", trim: true)
-    |> Enum.reduce({[], ""}, fn segment, {acc, running} ->
+    |> Enum.reduce({[], root_prefix}, fn segment, {acc, running} ->
       next = running <> segment <> "/"
       {[%{label: segment, prefix: next} | acc], next}
     end)

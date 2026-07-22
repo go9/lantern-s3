@@ -66,7 +66,8 @@ defmodule LanternS3.ExplorerTest do
           config: session["config"],
           buckets: session["buckets"],
           capabilities: session["capabilities"],
-          auto_open: session["auto_open"]
+          auto_open: session["auto_open"],
+          root_prefix: session["root_prefix"]
         )
 
       {:ok, Phoenix.Component.assign(socket, :scope, scope)}
@@ -88,7 +89,8 @@ defmodule LanternS3.ExplorerTest do
       "config" => Keyword.fetch!(opts, :config),
       "buckets" => Keyword.get(opts, :buckets, [%{name: "media", label: "media"}]),
       "capabilities" => Keyword.get(opts, :capabilities, :all),
-      "auto_open" => Keyword.get(opts, :auto_open, false)
+      "auto_open" => Keyword.get(opts, :auto_open, false),
+      "root_prefix" => Keyword.get(opts, :root_prefix, "")
     }
 
     live_isolated(conn, HostLive, session: session)
@@ -372,6 +374,49 @@ defmodule LanternS3.ExplorerTest do
 
       assert html =~ ~s(phx-submit="submit_move")
       refute html =~ ~s(phx-submit="confirm_delete")
+    end
+  end
+
+  describe "locked root prefix" do
+    test "auto-open lists inside the locked root, not the bucket root", %{conn: conn} do
+      listings = %{
+        {"media", "sessions/abc/"} => %{
+          folders: [],
+          files: [
+            %{
+              key: "sessions/abc/mine.png",
+              name: "mine.png",
+              size: 9,
+              last_modified: nil,
+              etag: "m"
+            }
+          ],
+          next_token: nil,
+          truncated?: false
+        },
+        # If the component ever listed the bucket root it'd surface someone
+        # else's prefix — this must NOT appear.
+        {"media", ""} => %{
+          folders: [%{prefix: "sessions/other/", name: "other"}],
+          files: [],
+          next_token: nil,
+          truncated?: false
+        }
+      }
+
+      {:ok, view, _html} =
+        boot(conn,
+          config: config_with(listings),
+          buckets: [%{name: "media", label: "media"}],
+          auto_open: true,
+          root_prefix: "sessions/abc/"
+        )
+
+      html = render_async(view)
+
+      assert html =~ "mine.png"
+      refute html =~ "sessions/other/"
+      refute html =~ ">other<"
     end
   end
 
