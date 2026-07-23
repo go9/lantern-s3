@@ -295,8 +295,15 @@ defmodule LanternS3.ExplorerTest do
       assert has_element?(view, "#lantern-test-uploader")
       assert html =~ "lt-uploader-panel"
 
-      view |> element(~s(button[phx-click="toggle_uploader"])) |> render_click()
+      # The uploader is a dialog OVER the table, never a replacement for it:
+      # the overlay is present AND the file listing is still rendered behind it.
+      assert has_element?(view, ~s([role="dialog"] #lantern-test-uploader))
+      assert html =~ "a.txt"
+
+      # Close via the dialog's close button; the table remains.
+      view |> element(~s(button[aria-label="Close upload dialog"])) |> render_click()
       refute has_element?(view, "#lantern-test-uploader")
+      assert render(view) =~ "a.txt"
     end
   end
 
