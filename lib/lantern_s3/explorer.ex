@@ -26,10 +26,11 @@ defmodule LanternS3.Explorer do
       CSS variables); this app already imports it in `assets/css/app.css`. Any
       element rendered with `class="lantern"` + `lt-*` classes is then styled
       automatically and consistently with the DB explorer.
-    * **Heroicons Tailwind plugin** — icons are rendered as `hero-*` utility
-      classes (e.g. `<span class="hero-folder lt-icon" />`). The host app's
-      Tailwind build must include the heroicons plugin for these to appear;
-      the `lt-icon`/`lt-icon-sm` classes size them.
+    * **Icons are self-contained** — icons render as `hero-*` spans and the
+      bundled `lantern_s3.css` ships mask-image rules for every icon this
+      package uses (Heroicons, MIT), so NO host Tailwind build is required;
+      the `lt-icon`/`lt-icon-sm` classes size them. Hosts that do run the
+      Tailwind heroicons plugin get byte-identical rules (harmless overlap).
     * **JS hooks** — `assets/js/lantern/s3_uploader.js` provides the external
       direct-to-S3 `Uploader` (registered in the LiveSocket `uploaders` map as
       `S3`), and a `LanternS3Download` hook triggers browser downloads from a
@@ -849,28 +850,46 @@ defmodule LanternS3.Explorer do
             {selection_toolbar(assigns)}
           <% end %>
 
-          <div
+          <%!-- Upload lives in a dialog OVER the table (never replaces it): the
+               listing stays visible, refreshes on each completed upload behind the
+               overlay, and closing drops you on your files. --%>
+          <.modal_shell
             :if={@show_uploader and Scope.can?(@scope, :upload) and @current_bucket}
-            class="lt-uploader-panel"
+            myself={@myself}
+            close_event="toggle_uploader"
           >
-            <.live_component
-              module={Uploader}
-              id={"#{@id}-uploader"}
-              adapter={@scope.upload_adapter || S3Adapter}
-              adapter_config={
-                %{
-                  storage_adapter: @scope.adapter,
-                  storage_config: @scope.config,
-                  bucket: @current_bucket,
-                  prefix: @prefix
+            <div class="lt-modal-head">
+              <h3 class="lt-modal-title">Upload files</h3>
+              <button
+                type="button"
+                class="lt-iconbtn"
+                phx-click="toggle_uploader"
+                phx-target={@myself}
+                aria-label="Close upload dialog"
+              >
+                <span class="hero-x-mark lt-icon" />
+              </button>
+            </div>
+            <div class="lt-modal-body lt-uploader-panel">
+              <.live_component
+                module={Uploader}
+                id={"#{@id}-uploader"}
+                adapter={@scope.upload_adapter || S3Adapter}
+                adapter_config={
+                  %{
+                    storage_adapter: @scope.adapter,
+                    storage_config: @scope.config,
+                    bucket: @current_bucket,
+                    prefix: @prefix
+                  }
                 }
-              }
-              accept={Map.get(@scope.upload_opts, :accept, :any)}
-              max_entries={Map.get(@scope.upload_opts, :max_entries, 20)}
-              max_file_size={Map.get(@scope.upload_opts, :max_file_size, 50_000_000)}
-              on_event={uploader_on_event(@id)}
-            />
-          </div>
+                accept={Map.get(@scope.upload_opts, :accept, :any)}
+                max_entries={Map.get(@scope.upload_opts, :max_entries, 20)}
+                max_file_size={Map.get(@scope.upload_opts, :max_file_size, 50_000_000)}
+                on_event={uploader_on_event(@id)}
+              />
+            </div>
+          </.modal_shell>
 
           <%= if @empty? do %>
             {empty_folder(assigns)}
@@ -1411,6 +1430,7 @@ defmodule LanternS3.Explorer do
   # A bare modal shell (overlay + card) function component with an :inner_block
   # slot, so each modal supplies its own body without a render closure.
   attr(:myself, :any, required: true)
+  attr(:close_event, :string, default: "close_modal", doc: "event the backdrop fires")
   slot(:inner_block, required: true)
 
   defp modal_shell(assigns) do
@@ -1420,7 +1440,7 @@ defmodule LanternS3.Explorer do
         <button
           type="button"
           class="lui-modal-backdrop"
-          phx-click="close_modal"
+          phx-click={@close_event}
           phx-target={@myself}
           aria-label="Close dialog"
         />

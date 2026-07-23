@@ -6,6 +6,12 @@ All notable changes are documented here ([Keep a Changelog](https://keepachangel
 ## [Unreleased]
 
 ### Added
+- **Uploader opens in a dialog over the table** — the Explorer's Upload now
+  overlays the file listing (backdrop + close) instead of replacing it, so the
+  browser stays visible and re-lists behind the dialog as uploads complete.
+- **Self-contained icons** — `lantern_s3.css` now bundles mask-image rules for
+  every `hero-*` icon the package renders (Heroicons, MIT). No host Tailwind
+  build required; hosts running the heroicons plugin get identical rules.
 - **Injectable upload adapter + limits** on `Scope` (`upload_adapter`, `upload_opts`):
   the Explorer's built-in uploader can now use a host-supplied presign adapter
   (e.g. a gated one) and accept/max-entries/max-file-size, instead of the fixed
