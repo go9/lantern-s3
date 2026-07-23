@@ -840,7 +840,7 @@ defmodule LanternS3.Explorer do
 
     ~H"""
     <div class="lt-body">
-      <div class="lt-content">
+      <div class="lt-content lt-upload-sheet-host">
         {breadcrumb(assigns)}
 
         <div class="lt-main">
@@ -854,12 +854,11 @@ defmodule LanternS3.Explorer do
                it): the listing stays visible, refreshes on each completed upload
                behind the overlay, and closing drops you on your files. Server-
                driven: rendered only while @show_uploader (the lui-sheet CSS is
-               presence-based), so no client dialog JS is involved. --%>
-          <div
-            :if={@show_uploader and Scope.can?(@scope, :upload) and @current_bucket}
-            class="lantern lt-dialog-portal"
-          >
-            <div class="lui-sheet" data-placement="right">
+               presence-based), so no client dialog JS is involved. Scoped: the
+               lt-upload-sheet override anchors it to the Explorer's own
+               lt-upload-sheet-host wrapper instead of the viewport. --%>
+          <div :if={@show_uploader and Scope.can?(@scope, :upload) and @current_bucket}>
+            <div class="lui-sheet lt-upload-sheet" data-placement="right">
               <button
                 type="button"
                 class="lui-sheet-backdrop"

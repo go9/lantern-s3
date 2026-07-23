@@ -6,7 +6,8 @@ All notable changes are documented here ([Keep a Changelog](https://keepachangel
 ## [Unreleased]
 
 ### Added
-- **Uploader opens in a slide-over sheet over the table** — the Explorer's
+- **Uploader opens in a slide-over sheet over the table** (scoped to the
+  Explorer itself, not the viewport) — the Explorer's
   Upload overlays the file listing from the right (backdrop + close) instead of
   replacing it; the listing stays visible and re-lists behind the sheet as
   uploads complete.
