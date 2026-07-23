@@ -88,6 +88,16 @@ defmodule LanternS3.Explorer do
     {:ok, socket |> emit(:upload, meta) |> list_async()}
   end
 
+  # Host-triggered re-list that deliberately does NOT emit. A host reacting to the
+  # `:upload` event (e.g. to run a post-upload sweep) needs a way to refresh the
+  # listing afterwards — object stores are only eventually consistent for LIST, so
+  # the re-list on `:uploaded` can race ahead of the new object. Routing that
+  # through `:uploaded` would re-emit `:upload` straight back into the host and
+  # loop, so refreshes get their own non-emitting path.
+  def update(%{refresh: true}, socket) do
+    {:ok, list_async(socket)}
+  end
+
   def update(%{scope: %Scope{} = scope} = assigns, socket) do
     socket =
       socket
