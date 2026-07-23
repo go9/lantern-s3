@@ -6,9 +6,10 @@ All notable changes are documented here ([Keep a Changelog](https://keepachangel
 ## [Unreleased]
 
 ### Added
-- **Uploader opens in a dialog over the table** — the Explorer's Upload now
-  overlays the file listing (backdrop + close) instead of replacing it, so the
-  browser stays visible and re-lists behind the dialog as uploads complete.
+- **Uploader opens in a slide-over sheet over the table** — the Explorer's
+  Upload overlays the file listing from the right (backdrop + close) instead of
+  replacing it; the listing stays visible and re-lists behind the sheet as
+  uploads complete.
 - **Self-contained icons** — `lantern_s3.css` now bundles mask-image rules for
   every `hero-*` icon the package renders (Heroicons, MIT). No host Tailwind
   build required; hosts running the heroicons plugin get identical rules.
