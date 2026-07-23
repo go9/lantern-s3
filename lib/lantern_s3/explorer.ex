@@ -850,46 +850,61 @@ defmodule LanternS3.Explorer do
             {selection_toolbar(assigns)}
           <% end %>
 
-          <%!-- Upload lives in a dialog OVER the table (never replaces it): the
-               listing stays visible, refreshes on each completed upload behind the
-               overlay, and closing drops you on your files. --%>
-          <.modal_shell
+          <%!-- Upload lives in a slide-over sheet OVER the table (never replaces
+               it): the listing stays visible, refreshes on each completed upload
+               behind the overlay, and closing drops you on your files. Server-
+               driven: rendered only while @show_uploader (the lui-sheet CSS is
+               presence-based), so no client dialog JS is involved. --%>
+          <div
             :if={@show_uploader and Scope.can?(@scope, :upload) and @current_bucket}
-            myself={@myself}
-            close_event="toggle_uploader"
+            class="lantern lt-dialog-portal"
           >
-            <div class="lt-modal-head">
-              <h3 class="lt-modal-title">Upload files</h3>
+            <div class="lui-sheet" data-placement="right">
               <button
                 type="button"
-                class="lt-iconbtn"
+                class="lui-sheet-backdrop"
+                style="border:0;padding:0"
                 phx-click="toggle_uploader"
                 phx-target={@myself}
-                aria-label="Close upload dialog"
-              >
-                <span class="hero-x-mark lt-icon" />
-              </button>
-            </div>
-            <div class="lt-modal-body lt-uploader-panel">
-              <.live_component
-                module={Uploader}
-                id={"#{@id}-uploader"}
-                adapter={@scope.upload_adapter || S3Adapter}
-                adapter_config={
-                  %{
-                    storage_adapter: @scope.adapter,
-                    storage_config: @scope.config,
-                    bucket: @current_bucket,
-                    prefix: @prefix
-                  }
-                }
-                accept={Map.get(@scope.upload_opts, :accept, :any)}
-                max_entries={Map.get(@scope.upload_opts, :max_entries, 20)}
-                max_file_size={Map.get(@scope.upload_opts, :max_file_size, 50_000_000)}
-                on_event={uploader_on_event(@id)}
+                aria-label="Close upload panel"
               />
+              <div class="lui-sheet-panel" role="dialog" aria-modal="true" aria-label="Upload files">
+                <div class="lui-sheet-header">
+                  <div class="lui-sheet-heading">
+                    <span class="lui-sheet-title">Upload files</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="lui-sheet-close"
+                    phx-click="toggle_uploader"
+                    phx-target={@myself}
+                    aria-label="Close upload dialog"
+                  >
+                    <span class="hero-x-mark lt-icon" />
+                  </button>
+                </div>
+                <div class="lui-sheet-body lt-uploader-panel">
+                  <.live_component
+                    module={Uploader}
+                    id={"#{@id}-uploader"}
+                    adapter={@scope.upload_adapter || S3Adapter}
+                    adapter_config={
+                      %{
+                        storage_adapter: @scope.adapter,
+                        storage_config: @scope.config,
+                        bucket: @current_bucket,
+                        prefix: @prefix
+                      }
+                    }
+                    accept={Map.get(@scope.upload_opts, :accept, :any)}
+                    max_entries={Map.get(@scope.upload_opts, :max_entries, 20)}
+                    max_file_size={Map.get(@scope.upload_opts, :max_file_size, 50_000_000)}
+                    on_event={uploader_on_event(@id)}
+                  />
+                </div>
+              </div>
             </div>
-          </.modal_shell>
+          </div>
 
           <%= if @empty? do %>
             {empty_folder(assigns)}
