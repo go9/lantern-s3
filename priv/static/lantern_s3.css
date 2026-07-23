@@ -452,3 +452,13 @@
   width: 1.5rem;
   height: 1.5rem;
 }
+
+/* ── Scoped upload sheet ──────────────────────────────────────────────────
+   The upload sheet slides over the EXPLORER, not the whole page: the host
+   wrapper is positioned and the lui-sheet (normally fixed/viewport) is
+   re-anchored to it. The panel is capped to the component's width and the
+   host gets a floor so a short table still leaves the sheet usable. */
+.lt-upload-sheet-host { position: relative; }
+.lt-upload-sheet-host:has(.lt-upload-sheet) { min-height: 26rem; }
+.lt-upload-sheet.lui-sheet { position: absolute; z-index: 30; }
+.lt-upload-sheet .lui-sheet-panel { width: min(26rem, 100%); }
