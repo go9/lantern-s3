@@ -16,7 +16,12 @@ defmodule LanternS3.ExplorerTest do
 
     @impl true
     def list(config, bucket, prefix, _opts) do
-      {:ok, Map.get(config.listings, {bucket, prefix}, empty())}
+      # A listing entry may be `{:error, reason}` so a failed list can be
+      # exercised, not just a successful one.
+      case Map.get(config.listings, {bucket, prefix}, empty()) do
+        {:error, _reason} = error -> error
+        listing -> {:ok, listing}
+      end
     end
 
     @impl true
@@ -439,6 +444,40 @@ defmodule LanternS3.ExplorerTest do
         refute source =~ "Fluxon", "#{path} must not depend on Fluxon"
         refute source =~ "FlickerWeb", "#{path} must not depend on FlickerWeb"
       end
+    end
+  end
+
+  describe "a failed listing is not an empty folder" do
+    test "renders the error and NOT the empty state", %{conn: conn} do
+      # These are different claims and only one can be true. On a failed list
+      # `entries` is empty, so a naive `empty?` renders "This folder is empty"
+      # beside the error banner — telling someone their data is gone because
+      # the storage API hiccuped. That is the worst thing this component can
+      # say, and it is why `empty?` is gated on `@error`.
+      listings = %{{"media", ""} => {:error, :timeout}}
+
+      {:ok, view, _html} = boot(conn, config: config_with(listings))
+
+      view |> element(~s(button[phx-value-bucket="media"])) |> render_click()
+      html = render_async(view)
+
+      assert html =~ "Failed to list objects"
+      refute html =~ "This folder is empty"
+    end
+
+    test "an genuinely empty folder still says so", %{conn: conn} do
+      # The converse, so the fix cannot be "never show the empty state".
+      listings = %{
+        {"media", ""} => %{folders: [], files: [], next_token: nil, truncated?: false}
+      }
+
+      {:ok, view, _html} = boot(conn, config: config_with(listings))
+
+      view |> element(~s(button[phx-value-bucket="media"])) |> render_click()
+      html = render_async(view)
+
+      assert html =~ "This folder is empty"
+      refute html =~ "Failed to list objects"
     end
   end
 end

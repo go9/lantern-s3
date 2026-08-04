@@ -827,8 +827,15 @@ defmodule LanternS3.Explorer do
   # --- browser (breadcrumb + toolbar + table + pagination) -------------------
 
   defp browser(assigns) do
+    # `@error` is part of this, and it is load-bearing. A failed listing leaves
+    # `entries` empty, so without the error term the component renders the
+    # error banner AND "this folder is empty" together — telling someone their
+    # data is gone because the storage API hiccuped. An error and an empty
+    # folder are different claims; only one of them can be true at a time, and
+    # the safe default when listing FAILED is to assert nothing about contents.
     empty? =
-      not assigns.loading and assigns.entries.folders == [] and assigns.entries.files == []
+      is_nil(assigns.error) and not assigns.loading and
+        assigns.entries.folders == [] and assigns.entries.files == []
 
     can_page? = assigns.next_token != nil or assigns.cursor_stack != []
 
